@@ -122,7 +122,7 @@ void loop() {
     Serial.println("Earthquake Detected!");
 
     isSirenActive = true;  // Set siren flag to true
-    playPooPeeSound();     // Trigger the "poo peee" sound
+    playReshamFiririBeat();     // Trigger the "Resham Firiri" melody
   } else {
     lcdVibration.clear();
     lcdVibration.print("No Vibrations");
@@ -149,36 +149,37 @@ long readUltrasonicDistance() {
   return distance;
 }
 
-// Function to generate the "poo peee pooo peeee pooo peeee tan tan" sound
-void playPooPeeSound() {
-  unsigned long startTime = millis(); // Get the current time
-  int tones[] = {400, 600, 800, 1000, 1200, 2344, 100, 56, 34, 56}; // Array of tones for variation
-  int durations[] = {200, 300, 400, 500, 444, 445, 34, 45, 23 ,34}; // Array of durations for variation
+// Complex Resham Firiri melody (improvised with variations)
+void playReshamFiririBeat() {
+  // Define the frequencies for the melody
+  int tones[] = { 330, 349, 392, 440, 466, 523, 587, 659, 698, 784, 880, 988, 1046, 1174, 1318, 1396 };  // Extended frequency array
+  
+  // Define the durations for each note (in milliseconds)
+  int durations[] = { 500, 500, 400, 400, 300, 200, 300, 200, 300, 400, 500, 300, 400, 500, 600, 700 };  // Extended duration array
+  
+  // Adding variation to melody
+  for (int i = 0; i < 16; i++) {  // Loop through tones
+    Serial.print("Playing note: ");
+    Serial.println(tones[i]);
+    
+    tone(BUZZER_PIN, tones[i]);  // Play the current tone
+    digitalWrite(LED_PIN, HIGH); // Turn on the LED
+    delay(durations[i]);         // Wait for the note duration
+    digitalWrite(LED_PIN, LOW);  // Turn off the LED
+    delay(50);                   // Small delay between notes
 
-  while (millis() - startTime < 5000) {  // Play the sound for 5 seconds
-    for (int i = 0; i < 5; i++) {
-      tone(BUZZER_PIN, tones[i]);            // Play a tone
-      digitalWrite(LED_PIN, HIGH);          // Turn on LED
-      delay(durations[i % 4]);              // Variable duration
-      digitalWrite(LED_PIN, LOW);           // Turn off LED
-      delay(100);                           // Small pause between tones
+    // Add rhythm with slight pauses and syncopation
+    if (i == 4 || i == 6) { 
+      delay(200);  // Pause after some notes for the beat
     }
-
-    // Add a quick double beep for excitement
-    tone(BUZZER_PIN, 1200);
-    digitalWrite(LED_PIN, HIGH);
-    delay(100);
-    digitalWrite(LED_PIN, LOW);
-    delay(100);
-    tone(BUZZER_PIN, 1400);
-    digitalWrite(LED_PIN, HIGH);
-    delay(100);
-    digitalWrite(LED_PIN, LOW);
-    delay(200);
   }
 
-  // Turn off buzzer and LED after sound
+  // Add a dramatic end
+  tone(BUZZER_PIN, 1000);  // Play an ending tone (high pitch)
+  digitalWrite(LED_PIN, HIGH);
+  delay(150);
   digitalWrite(LED_PIN, LOW);
-  noTone(BUZZER_PIN);
-  isSirenActive = false;  // Reset the siren flag
+  noTone(BUZZER_PIN);      // Stop the sound
+
+  Serial.println("Melody finished.");
 }
