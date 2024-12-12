@@ -22,6 +22,9 @@ const int maxSlots = 10;
 long duration;
 int distance;
 bool isSirenActive = false;  // Flag to check if siren is active
+int vibrationState = 0;  // Variable to store vibration state
+unsigned long lastVibrationTime = 0;  // Last vibration detection time
+unsigned long vibrationDelay = 2000;  // Minimum delay between earthquake detections (in ms)
 
 void setup() {
   // Set up pins
@@ -116,17 +119,31 @@ void loop() {
   }
 
   // Check for vibrations (earthquake detection)
-  if (digitalRead(VIBRATION_PIN) == HIGH && !isSirenActive) {
+  vibrationState = digitalRead(VIBRATION_PIN);  // Read vibration sensor state
+
+  if (vibrationState == HIGH && (millis() - lastVibrationTime) > vibrationDelay) {
+    // Earthquake detected, trigger the buzzer and play a melody
+    lastVibrationTime = millis();  // Update the last vibration time
     lcdVibration.clear();
     lcdVibration.print("Earthquake Alert!");
     Serial.println("Earthquake Detected!");
 
     isSirenActive = true;  // Set siren flag to true
-    playReshamFiririBeat();     // Trigger the "Resham Firiri" melody
+    playEarthquakeSound(); // Trigger the sound when earthquake is detected
+
+    // Open the gate and turn on LED for earthquake alert
+    gateServo.write(90);  // Open the gate
+    digitalWrite(LED_PIN, HIGH);  // LED on during earthquake
   } else {
     lcdVibration.clear();
     lcdVibration.print("No Vibrations");
     Serial.println("No Vibrations Detected");
+
+    isSirenActive = false;  // Reset siren flag when no vibration detected
+
+    // Close the gate and turn off LED when there's no earthquake
+    gateServo.write(0);  // Close the gate
+    digitalWrite(LED_PIN, LOW);  // LED off
   }
 
   delay(50);  // Small delay to avoid bouncing
@@ -149,37 +166,31 @@ long readUltrasonicDistance() {
   return distance;
 }
 
-// Complex Resham Firiri melody (improvised with variations)
-void playReshamFiririBeat() {
-  // Define the frequencies for the melody
-  int tones[] = { 330, 349, 392, 440, 466, 523, 587, 659, 698, 784, 880, 988, 1046, 1174, 1318, 1396 };  // Extended frequency array
-  
-  // Define the durations for each note (in milliseconds)
-  int durations[] = { 500, 500, 400, 400, 300, 200, 300, 200, 300, 400, 500, 300, 400, 500, 600, 700 };  // Extended duration array
-  
-  // Adding variation to melody
-  for (int i = 0; i < 16; i++) {  // Loop through tones
-    Serial.print("Playing note: ");
-    Serial.println(tones[i]);
-    
-    tone(BUZZER_PIN, tones[i]);  // Play the current tone
-    digitalWrite(LED_PIN, HIGH); // Turn on the LED
-    delay(durations[i]);         // Wait for the note duration
-    digitalWrite(LED_PIN, LOW);  // Turn off the LED
-    delay(50);                   // Small delay between notes
+// Function to play sound when earthquake is detected
+void playEarthquakeSound() {
+  // Frequencies and durations for the melody: "Earthquake, Earthquake, Oh my God"
+  int frequencies[] = {
+    1000, 900, 800, 700, 600, 500, 400, 300
+  }; // The frequencies for the melody
 
-    // Add rhythm with slight pauses and syncopation
-    if (i == 4 || i == 6) { 
-      delay(200);  // Pause after some notes for the beat
-    }
+  int durations[] = {
+    300, 300, 300, 300, 200, 250, 150, 200
+  };  // Durations of each note in milliseconds
+
+  // Play the melody with complex timing
+  for (int i = 0; i < 7; i++) {
+    tone(BUZZER_PIN, frequencies[i]);  // Play the current note
+    digitalWrite(LED_PIN, HIGH);        // Turn LED on during sound
+    delay(durations[i]);               // Wait for the note duration
+    noTone(BUZZER_PIN);                // Stop the tone after each note
+    digitalWrite(LED_PIN, LOW);         // Turn LED off after each note
+    delay(100);                        // Short pause between notes
   }
 
-  // Add a dramatic end
-  tone(BUZZER_PIN, 1000);  // Play an ending tone (high pitch)
-  digitalWrite(LED_PIN, HIGH);
-  delay(150);
-  digitalWrite(LED_PIN, LOW);
-  noTone(BUZZER_PIN);      // Stop the sound
-
-  Serial.println("Melody finished.");
+  // Optional: Add a final alert tone to make the sound more dramatic
+  tone(BUZZER_PIN, 1500);   // High-pitched final alert tone
+  digitalWrite(LED_PIN, HIGH); // Turn LED on for dramatic effect
+  delay(500);               // Play the tone for 500ms
+  noTone(BUZZER_PIN);       // Stop the tone
+  digitalWrite(LED_PIN, LOW); // Turn LED off after the final tone
 }
